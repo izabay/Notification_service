@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
-const db = require('./config/database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,15 +20,23 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
+// 404 handler (before error middleware)
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not Found' });
+});
+
 // Error handling middleware
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
+  // eslint-disable-next-line no-console
   console.error(err.stack);
   res.status(500).json({ error: 'Internal Server Error' });
 });
 
 // Start server only when run directly (prevents listen during tests)
 if (require.main === module) {
+  // eslint-disable-next-line no-console
   app.listen(PORT, () => {
+    // eslint-disable-next-line no-console
     console.log(`Server running on port ${PORT}`);
   });
 }

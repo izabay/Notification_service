@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
 });
 
 // Create user
-router.post('/', 
+router.post('/',
   body('name').notEmpty(),
   body('email').isEmail(),
   async (req, res) => {

@@ -76,7 +76,7 @@ describe('Users API', () => {
       const res = await request(app)
         .post('/api/users')
         .send(newUser);
-      
+
       if (res.statusCode === 201) {
         expect(res.body).toHaveProperty('id');
         expect(res.body.name).toBe(newUser.name);
@@ -104,7 +104,7 @@ describe('Health API', () => {
     const timestamp = new Date(res.body.timestamp);
     const now = new Date();
     const diffMs = now.getTime() - timestamp.getTime();
-    
+
     // Should be within last 5 seconds
     expect(diffMs).toBeLessThan(5000);
   });

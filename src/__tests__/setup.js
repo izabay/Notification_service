@@ -15,7 +15,7 @@ global.console = {
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
-  error: jest.fn(),
+  error: jest.fn()
 };
 
 // Global test timeout
@@ -56,7 +56,7 @@ jest.mock('../config/database', () => mockDb);
 afterAll(async () => {
   // Close database connections
   // await db.closePool();
-  
+
   // Restore console
   jest.restoreAllMocks();
 });
