@@ -399,3 +399,43 @@ GitHub Actions → workflow_name → Run workflow
   if: success()  # Only if previous steps succeeded
   run: npm test
 ```
+
+## Docker Build Error Fix (Resolved)
+
+### Issue
+Docker build was failing with:
+```
+ERROR: failed to calculate checksum of ref ...: "/.env.example": not found
+ERROR: failed to calculate checksum of ref ...: "/src": not found
+```
+
+### Root Cause
+- `.dockerignore` excluded required build context files
+- `Dockerfile` referenced non-existent files (`index.js`, `schema.sql`)
+- Build context missing `src` and `.env.example`
+
+### Solution Applied
+
+**1. Updated `.dockerignore`**:
+- Explicitly include: `src`, `public`, `.env.example`, `init.sql`
+- Exclude: `.mysql_data`, `node_modules`, `.git`, `coverage`
+
+**2. Fixed `Dockerfile` COPY statements**:
+- Removed non-existent `index.js` and `schema.sql` references
+- Added correct files: `public`, `init.sql`, `.env.example`
+
+**3. Enhanced `docker-ci.yml` workflow**:
+- Added debug step to list build context files
+- Added safety check to create `.env.example` if missing
+
+### Verification
+✅ Local build succeeds  
+✅ All image layers export correctly  
+✅ Pushed to GitHub  
+✅ CI pipeline Docker build stage passes  
+
+### Prevention
+1. Test Docker builds locally: `docker build -t app:test .`
+2. Regular `.dockerignore` audits
+3. Use `--progress=plain` for detailed build output when debugging
+
