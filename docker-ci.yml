@@ -1,0 +1,71 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    # Optionally add feature branches
+    # - feature/*
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Show repository files (debug)
+        run: |
+          echo "Repository root contents:" && ls -la
+          echo "src contents:" && ls -la src || true
+          echo ".env.example exists:" && [ -f .env.example ] && echo "yes" || echo "no"
+
+      - name: Ensure .env.example exists (safe default)
+        run: |
+          if [ ! -f .env.example ]; then
+            echo "PORT=3000" > .env.example
+            echo ".env.example created for CI build"
+          else
+            echo ".env.example present"
+          fi
+
+      # Set up Docker Buildx (for multi-platform builds if needed)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      # Cache Docker layers (for faster builds)
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      # Build the Docker image
+      - name: Build Docker image
+        run: |
+          docker build -t my-app:${{ github.sha }} .
+
+      # Push Docker image to Docker Hub (optional)
+      - name: Push Docker image to Docker Hub
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker push my-app:${{ github.sha }}
+
+      # Optionally, if you're using Docker Hub, you can tag the image with a version or "latest"
+      - name: Push Docker image with latest tag
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker tag my-app:${{ github.sha }} my-app:latest
+          docker push my-app:latest

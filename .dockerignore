@@ -1,0 +1,20 @@
+node_modules
+npm-debug.log
+.git
+.github
+.gitignore
+coverage
+dist
+.env
+.env.local
+*.log
+Dockerfile.*
+.mysql_data
+# Keep these in the build context
+!src
+!public
+!package.json
+!package-lock.json
+!init.sql
+!README.md
+!.env.example

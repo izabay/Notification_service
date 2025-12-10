@@ -1,0 +1,89 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types: [completed]
+    branches: [main, develop]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Determine environment
+        id: environment
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "env_name=production" >> $GITHUB_OUTPUT
+            echo "env_url=https://app.example.com" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            echo "env_name=staging" >> $GITHUB_OUTPUT
+            echo "env_url=https://staging.example.com" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to ${{ steps.environment.outputs.env_name }}
+        run: |
+          echo "🚀 Deploying to ${{ steps.environment.outputs.env_name }}"
+          echo "📍 Environment URL: ${{ steps.environment.outputs.env_url }}"
+          echo "⏱️  Deployment timestamp: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          
+          # In real scenario, this would:
+          # 1. Pull latest image from registry
+          # 2. Update container orchestration (Docker Compose, K8s, etc.)
+          # 3. Run health checks
+          # 4. Set up monitoring
+          # 5. Configure load balancer
+          # 6. Run smoke tests
+
+      - name: Health check
+        run: |
+          echo "🏥 Running health checks..."
+          # Would check API health endpoint
+          # Would verify database connectivity
+          # Would check memory/CPU metrics
+
+      - name: Notify deployment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: context.payload.deployment.id,
+              state: 'success',
+              environment_url: '${{ steps.environment.outputs.env_url }}',
+              description: 'Deployment completed successfully'
+            });
+        continue-on-error: true
+
+      - name: Notify Slack on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "❌ Deployment to ${{ steps.environment.outputs.env_name }} failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Deployment Failed*\nEnvironment: ${{ steps.environment.outputs.env_name }}\nBranch: ${{ github.ref }}\nAuthor: ${{ github.actor }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        continue-on-error: true

@@ -1,0 +1,25 @@
+#!/bin/bash
+# Commit message hook - Validate commit message format
+# Copy to .git/hooks/commit-msg and make executable
+
+commit_msg=$(cat "$1")
+
+# Pattern: <type>(<scope>): <subject>
+# Example: feat(users): add user registration
+
+if ! echo "$commit_msg" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|ci|perf)(\(.+\))?!?: .{1,}"; then
+    echo "❌ Invalid commit message format"
+    echo ""
+    echo "Expected format: <type>(<scope>): <subject>"
+    echo "Example: feat(users): add user registration"
+    echo ""
+    echo "Types: feat, fix, docs, style, refactor, test, chore, ci, perf"
+    exit 1
+fi
+
+# Check message length
+if [ ${#commit_msg} -gt 100 ]; then
+    echo "⚠️  Warning: Commit message is longer than 100 characters"
+fi
+
+exit 0

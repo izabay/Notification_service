@@ -1,0 +1,15 @@
+#!/bin/bash
+# Pre-commit hook - Run linting before commit
+# Copy to .git/hooks/pre-commit and make executable
+
+echo "🔍 Running pre-commit checks..."
+
+# Check for ESLint violations
+npm run lint
+if [ $? -ne 0 ]; then
+    echo "❌ Linting failed. Commit aborted."
+    exit 1
+fi
+
+echo "✅ Pre-commit checks passed"
+exit 0
